@@ -74,6 +74,24 @@ def localizacion(balizas, real, ideal, centro, radio, mostrar=0):
   # Para que el robot se ejecuta de manera correcta, se deben de tener al menos dos
   # balizas, ya que si tiene una baliza, no se puede calcular la posición del robot real
   # y por tanto el robot se perderá seguramente.
+  mejor_pose = []
+  mejor_peso = 1000
+  medidas = real.sense(balizas)
+
+  PRECISION = 0.05
+  r = int(radio/PRECISION) # Como de lejos se va a buscar
+  imagen = [[float('nan') for i in range(2*r)] for j in range(2*r)] # matriz
+  for i in range(2*r): # recorre la matriz de la imagen
+    for j in range(2*r):
+      x = centro[0]+(j-r)*PRECISION # Ponemos el robot ideal en todas las posiciones.
+      y = centro[1]+(i-r)*PRECISION
+      ideal.set(x,y,ideal.orientation)
+      peso = ideal.measurement_prob(medidas,balizas); # Compara la medida con el robot ideal
+      if peso < mejor_peso: # Cuanto menor sea la distancia mayor será la probabilidad
+        mejor_peso = peso
+        mejor_pose = ideal.pose()
+      imagen[i][j] = peso
+  ideal.set(*mejor_pose)
 
 
 
@@ -147,7 +165,7 @@ espacio = 0.
 random.seed(datetime.now())
 
 # Localizar inicialmente al robot (IMPORTANTE)
-
+localizacion(objetivos,real,ideal,[2.5,2.5],5,1)
 
 for punto in objetivos:
   while distancia(tray_ideal[-1],punto) > EPSILON and len(tray_ideal) <= 1000:
@@ -165,6 +183,15 @@ for punto in objetivos:
         v = 0
       ideal.move(w,v)
       real.move(w,v)
+      # Se calcula la distancia entre el robot ideal y el robot real
+      medidas = real.sense(objetivos)
+      # Se calcula la probabilidad de que el robot real se encuentre en la posición del robot ideal
+      prob = ideal.measurement_prob(medidas,objetivos)
+      # Si la probabilidad es mayor que 0.20, se aplica la localización
+      # Cuanta menor probabilidad se le establezca a la condición, más veces
+      # se aplicará la localización, y por tanto, más se desviará el robot real
+      if prob > 0.20:
+        localizacion(objetivos, real, ideal, ideal.pose(), 0.5, mostrar=0)
     else:
       ideal.move_triciclo(w,v,LONGITUD)
       real.move_triciclo(w,v,LONGITUD)
