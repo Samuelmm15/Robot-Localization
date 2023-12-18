@@ -31,6 +31,8 @@ def angulo_rel(pose,p):
   while w < -pi: w += 2*pi
   return w
 
+# Robot ideal --> Color verde
+# Robot real --> Color rojo
 def mostrar(objetivos,ideal,trayectoria):
   # Mostrar objetivos y trayectoria:
   #plt.ion() # modo interactivo
@@ -74,25 +76,38 @@ def localizacion(balizas, real, ideal, centro, radio, mostrar=0):
   # Para que el robot se ejecuta de manera correcta, se deben de tener al menos dos
   # balizas, ya que si tiene una baliza, no se puede calcular la posición del robot real
   # y por tanto el robot se perderá seguramente.
-  mejor_pose = []
-  mejor_peso = 1000
-  medidas = real.sense(balizas)
 
-  PRECISION = 0.05
-  r = int(radio/PRECISION) # Como de lejos se va a buscar
-  imagen = [[float('nan') for i in range(2*r)] for j in range(2*r)] # matriz
-  for i in range(2*r): # recorre la matriz de la imagen
-    for j in range(2*r):
-      x = centro[0]+(j-r)*PRECISION # Ponemos el robot ideal en todas las posiciones.
-      y = centro[1]+(i-r)*PRECISION
-      ideal.set(x,y,ideal.orientation)
-      peso = ideal.measurement_prob(medidas,balizas); # Compara la medida con el robot ideal
-      if peso < mejor_peso: # Cuanto menor sea la distancia mayor será la probabilidad
-        mejor_peso = peso
-        mejor_pose = ideal.pose()
-      imagen[i][j] = peso
-  ideal.set(*mejor_pose)
-
+  # Imagen que almacenará todos los errores dados para todos los puntos en el radio
+  imagen = []
+  # Inicializamos el error a un valor muy grande para que el primer error que se encuentre
+    # sea menor que el error inicial
+  error_menor = sys.maxsize
+  # Inicializamos el punto donde se encuentra el robot real, este se tratará del mejor punto encontrado
+  mejor_punto = []
+  # Incremento para recorrer todo el radio
+  incremento = 0.05
+  for j in np.arange(-radio, radio, incremento):
+    imagen.append([])
+    for i in np.arange(-radio, radio, incremento):
+      # Obtención de las componentes del punto actual
+      x_componente = centro[0] + i
+      y_componente = centro[1] + j
+      # Se realiza el movimiento del robot ideal al punto actual
+      ideal.set(x_componente, y_componente, ideal.orientation)
+      # Se realiza la diferencia entre las medidas que tiene el robot ideal y las medidas
+        # que tiene el robot real, de tal forma que se pueda obtener el error dado
+      error = real.measurement_prob(ideal.sense(balizas), balizas)
+      # Almacenamiento del error
+      imagen[-1].append(error)
+      # Si se produce que el error es menor que el error mínimo, se produce que el punto actual
+        # es el mejor punto encontrado hasta el momento
+      if (error < error_menor):
+        error_menor = error
+        mejor_punto = [x_componente, y_componente]
+  # Se establece la posición del robot ideal a la posición a la que se piensa que se encuentra
+    # el robot real
+  ideal.set(mejor_punto[0], mejor_punto[1], real.orientation)
+  # print("Modificacion:", mejor_punto, error_menor)
 
 
   if mostrar:
@@ -164,8 +179,10 @@ espacio = 0.
 #random.seed(0)
 random.seed(datetime.now())
 
+# La matriz [0,4] es la posición inicial del robot, es decir, el centro
+# esta se puede establecer como una variable o directamente como un valor
 # Localizar inicialmente al robot (IMPORTANTE)
-localizacion(objetivos,real,ideal,[2.5,2.5],5,1)
+localizacion(objetivos,real,ideal, [0, 4],5,1)
 
 for punto in objetivos:
   while distancia(tray_ideal[-1],punto) > EPSILON and len(tray_ideal) <= 1000:
@@ -183,22 +200,17 @@ for punto in objetivos:
         v = 0
       ideal.move(w,v)
       real.move(w,v)
-      # Se calcula la distancia entre el robot ideal y el robot real
-      medidas = real.sense(objetivos)
-      # Se calcula la probabilidad de que el robot real se encuentre en la posición del robot ideal
-      prob = ideal.measurement_prob(medidas,objetivos)
-      # Si la probabilidad es mayor que 0.20, se aplica la localización
-      # Cuanta menor probabilidad se le establezca a la condición, más veces
-      # se aplicará la localización, y por tanto, más se desviará el robot real
-      if prob > 0.20:
-        localizacion(objetivos, real, ideal, ideal.pose(), 0.5, mostrar=0)
     else:
       ideal.move_triciclo(w,v,LONGITUD)
       real.move_triciclo(w,v,LONGITUD)
     tray_ideal.append(ideal.pose())
     tray_real.append(real.pose())
 
-    # Hay que especificar si la distancia real y la generada difiere, si difiere se aplica la localización
+    # Se debe de comprobar si la distancia entre el robot real y el ideal es mayor que un umbral
+    # Si es mayor, se debe de aplicar la localización
+    # Si no es mayor, se sigue con la ejecución del robot
+    if (real.measurement_prob(real.sense(objetivos), objetivos) > EPSILON):
+      localizacion(objetivos, real, ideal, ideal.pose(), 0.2, mostrar=0)
 
     espacio += v
     tiempo  += 1
