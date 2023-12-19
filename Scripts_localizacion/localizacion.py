@@ -64,19 +64,6 @@ def localizacion(balizas, real, ideal, centro, radio, mostrar=0):
   # Buscar la localizaci�n m�s probable del robot, a partir de su sistema
   # sensorial, dentro de una regi�n cuadrada de centro "centro" y lado "2*radio".
 
-  # Hay que hacer una búsqueda del robot real por el entorno
-  # Hay que tener en cuenta que cuando se haga una búsqueda, el tamaño de las divisiones
-  # debe ser mayor que el radio del robot, para que no se pierda en el entorno, ya que si se
-  # pierde, no se podrá localizar o será más complicado de localizar
-
-  # Cuando se detecta que el robot se ha desviado a partir del real, se aplica la localización
-  # y la búsqueda se encarga de analizar cada uno de los pixeles de la imagen para ver si se
-  # encuentra el robot real para poder enviarlo a la posición del robot ideal.
-
-  # Para que el robot se ejecuta de manera correcta, se deben de tener al menos dos
-  # balizas, ya que si tiene una baliza, no se puede calcular la posición del robot real
-  # y por tanto el robot se perderá seguramente.
-
   # Imagen que almacenará todos los errores dados para todos los puntos en el radio
   imagen = []
   # Inicializamos el error a un valor muy grande para que el primer error que se encuentre
@@ -181,7 +168,7 @@ random.seed(datetime.now())
 
 # La matriz [0,4] es la posición inicial del robot, es decir, el centro
 # esta se puede establecer como una variable o directamente como un valor
-# Localizar inicialmente al robot (IMPORTANTE)
+# Localización inicial del robot
 localizacion(objetivos,real,ideal, [0, 4],5,1)
 
 for punto in objetivos:

@@ -1,3 +1,3 @@
-Práctica localización robótica
+﻿Práctica de localización
 
-La práctica de localización, la acción u operación que se debe de realizar con los script, se basan en que cuando el robot se desvía de la ruta debido a los errores, se debe de aplicar la localización en ese momento, para este caso, la localización que debe de ser implantada es la localización mediante balizas. Estas balizas, sirven para poder determinar si el robot se devía mucho de estas balizas, se debe de aplicar el algoritmo de localización para que el robot se acerque a las distintas balizas que existen dentro de esta ruta.
+La localización de un robot se aplica cuando el robot ideal se ha deviado del real, por tanto, cuando se detecta que el robot ideal se ha desviado del real se aplica la búsqueda, esta se encarga de analizar cada uno de los píxeles de la imagen para ver si se encuentra el robot real, una vez se encuentra el robot real se envia a la posición. Para que el robot pueda funcionar de manera correcta, se debe de tener al menos dos balizas ya que si se tiene una única baliza no se puede calcular la posición del robot real y por tanto el robot lo más seguro es que se pierda.
