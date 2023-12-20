@@ -94,7 +94,7 @@ def localizacion(balizas, real, ideal, centro, radio, mostrar=0):
   # Se establece la posición del robot ideal a la posición a la que se piensa que se encuentra
     # el robot real
   ideal.set(mejor_punto[0], mejor_punto[1], real.orientation)
-  # print("Modificacion:", mejor_punto, error_menor)
+  print("Modificacion:", mejor_punto, error_menor)
 
 
   if mostrar:
